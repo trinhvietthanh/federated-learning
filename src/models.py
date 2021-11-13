@@ -81,7 +81,7 @@ class CNNMnist(nn.Module):
         x = self.layer2(x)
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc(x))
-        return F.log_softmax(x, dim=1)
+        return F.softmax(x, dim=1)
 
 class CNNFashion_Mnist(nn.Module):
     def __init__(self, args):
