@@ -80,7 +80,6 @@ class CNNMnist(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = x.view(x.size(0), -1)
-        # x = x.view(-1, x.shape[1]*x.shape[2]*x.shape[3])
         x = F.relu(self.fc(x))
         return F.log_softmax(x, dim=1)
 
