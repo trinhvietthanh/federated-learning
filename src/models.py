@@ -6,38 +6,22 @@ from torch import nn
 import torch.nn.functional as F
 
 
-# class MLP(nn.Module):
-#     def __init__(self, dim_in, dim_hidden, dim_out):
-#         super(MLP, self).__init__()
-#         self.layer_input = nn.Linear(dim_in, dim_hidden)
-#         self.relu = nn.ReLU()
-#         self.dropout = nn.Dropout()
-#         self.layer_hidden = nn.Linear(dim_hidden, dim_out)
-#         self.softmax = nn.Softmax(dim=1)
-
-#     def forward(self, x):
-#         x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])
-#         x = self.layer_input(x)
-#         x = self.dropout(x)
-#         x = self.relu(x)
-#         x = self.layer_hidden(x)
-#         return self.softmax(x)
-
 class MLP(nn.Module):
-    def __init__(self, dim_in=784, dim_hidden=200, dim_out=10, use_dropout=False, activation='ReLU'):
+    def __init__(self, dim_in=784, dim_hidden=200, dim_out=10,
+                 use_dropout=False, activation='ReLU'):
         super(MLP, self).__init__()
         self.layers = nn.ModuleList([nn.Linear(dim_in, dim_hidden),
                                      nn.Linear(dim_hidden, dim_hidden),
                                      nn.Linear(dim_hidden, dim_out)])
         self.softmax = nn.Softmax(dim=1)
 
-        self.relu = getattr(nn, activation)
+        self.relu = getattr(nn, activation)()
         self.dropout = None
         if use_dropout:
             self.dropout = nn.Dropout()
 
-    def forward(self, x):   # input x of size (batchsize, 1, H, W)
-        x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1]) # x of size (batchsize, H*W)
+    def forward(self, x):                                       # input x of size (batchsize, 1, H, W)
+        x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1])  # x of size (batchsize, H*W)
 
         # Compute the forward propagation
         for layer in self.layers:
@@ -70,11 +54,11 @@ class CNNMnist(nn.Module):
     def __init__(self, args):
         super(CNNMnist, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(args.num_channels, 32, kernel_size=5),
+            nn.Conv2d(args.num_channels, args.num_hidden_channels1, kernel_size=5),
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.layer2 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=5),
+            nn.Conv2d(args.num_hidden_channels1, args.num_hidden_channels2, kernel_size=5),
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.fc = nn.Linear(1024, args.num_classes)
@@ -169,7 +153,14 @@ class modelC(nn.Module):
 # ==========================================================================================================
 if __name__ == "__main__":
     import torch
-    model = MLP()
+    # from collections import namedtuple
+    # args = {'num_classes': 10, 'num_channels': 1,
+    #         'num_hidden_channels1': 32, 'num_hidden_channels2': 640}
+    # args = namedtuple('x', args.keys())(*args.values())
+    # model = CNNMnist(args)
+
     x = torch.rand((2, 1, 28, 28))
+    model = MLP()
     pytorch_total_params = sum(p.numel() for p in model.parameters())
     print(pytorch_total_params)
+    y = model(x)
