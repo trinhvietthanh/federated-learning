@@ -69,12 +69,8 @@ class CNNMnist(nn.Module):
 
     def forward(self, x):
         x = self.layer1(x)
-        print(x.shape)
         x = self.layer2(x)
-        # x = x.view(x.size(0), -1)
-        print(x.shape)
         x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1])  # x of size (batchsize, H*W)
-
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return F.softmax(x, dim=1)
