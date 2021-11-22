@@ -54,20 +54,29 @@ class CNNMnist(nn.Module):
     def __init__(self, args):
         super(CNNMnist, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(args.num_channels, args.num_hidden_channels1, kernel_size=5),
+            nn.Conv2d(args.num_channels, args.num_hidden_channels1,kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(2))
+            nn.MaxPool2d(2,2))
+        
         self.layer2 = nn.Sequential(
-            nn.Conv2d(args.num_hidden_channels1, args.num_hidden_channels2, kernel_size=5),
+            nn.Conv2d(args.num_hidden_channels1, args.num_hidden_channels2,kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(2))
-        self.fc = nn.Linear(1024, args.num_classes)
+            nn.MaxPool2d(2,2))
+        
+        self.fc1 = nn.Linear(args.num_hidden_channels2*7*7, 512)
+        self.fc2 = nn.Linear(512, args.num_classes)
+
 
     def forward(self, x):
         x = self.layer1(x)
+        print(x.shape)
         x = self.layer2(x)
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.fc(x))
+        # x = x.view(x.size(0), -1)
+        print(x.shape)
+        x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1])  # x of size (batchsize, H*W)
+
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
         return F.softmax(x, dim=1)
 
 class CNNFashion_Mnist(nn.Module):
@@ -153,14 +162,14 @@ class modelC(nn.Module):
 # ==========================================================================================================
 if __name__ == "__main__":
     import torch
-    # from collections import namedtuple
-    # args = {'num_classes': 10, 'num_channels': 1,
-    #         'num_hidden_channels1': 32, 'num_hidden_channels2': 640}
-    # args = namedtuple('x', args.keys())(*args.values())
-    # model = CNNMnist(args)
+    from collections import namedtuple
+    args = {'num_classes': 10, 'num_channels': 1,
+            'num_hidden_channels1': 32, 'num_hidden_channels2': 64}
+    args = namedtuple('x', args.keys())(*args.values())
+    model = CNNMnist(args)
 
     x = torch.rand((2, 1, 28, 28))
-    model = MLP()
+    # model = MLP()
     pytorch_total_params = sum(p.numel() for p in model.parameters())
     print(pytorch_total_params)
-    y = model(x)
+    # y = model(x)
