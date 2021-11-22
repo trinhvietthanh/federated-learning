@@ -82,21 +82,25 @@ if __name__ == '__main__':
         print(f'\n | Global Training Round : {epoch+1} |\n')
 
         global_model.train()
-        m = max(int(args.frac * args.num_users), 1)
+        m = max(int(args.frac * args.num_users), 1)  #  the number of users used to update the global weights
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
+        # Update the weights from clients
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset,
                                       idxs=user_groups[idx], logger=logger)
-            w, loss = local_model.update_weights(
-                model=copy.deepcopy(global_model), global_round=epoch)
+            # Update the weights of the idx clients
+            w, loss = local_model.update_weights(model=copy.deepcopy(global_model),
+                                                 global_round=epoch)
+
+            # Save the weights of the idx clients
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(loss))
 
-        # update global weights
+        # Average the local weights
         global_weights = average_weights(local_weights)
 
-        # update global weights
+        # Update the global weights by the averaging local weights
         global_model.load_state_dict(global_weights)
 
         loss_avg = sum(local_losses) / len(local_losses)
@@ -160,9 +164,10 @@ if __name__ == '__main__':
     # Plot Average Accuracy vs Communication rounds
     plt.figure()
     plt.title('Test Accuracy vs Communication rounds')
+    print(test_accuracy)
     plt.plot(range(len(test_accuracy)), test_accuracy, color='k')
     plt.ylabel('Test Accuracy')
     plt.xlabel('Communication Rounds')
-    plt.savefig('./save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
+    plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
                 format(args.dataset, args.model, args.epochs, args.frac,
                        args.iid, args.local_ep, args.local_bs))

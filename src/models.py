@@ -6,43 +6,30 @@ from torch import nn
 import torch.nn.functional as F
 
 
-# class MLP(nn.Module):
-#     def __init__(self, dim_in, dim_hidden, dim_out):
-#         super(MLP, self).__init__()
-#         self.layer_input = nn.Linear(dim_in, dim_hidden)
-#         self.relu = nn.ReLU()
-#         self.dropout = nn.Dropout()
-#         self.layer_hidden = nn.Linear(dim_hidden, dim_out)
-#         self.softmax = nn.Softmax(dim=1)
-
-#     def forward(self, x):
-#         x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])
-#         x = self.layer_input(x)
-#         x = self.dropout(x)
-#         x = self.relu(x)
-#         x = self.layer_hidden(x)
-#         return self.softmax(x)
 class MLP(nn.Module):
-    def __init__(self, dim_in, dim_hidden, dim_out):
+    def __init__(self, dim_in=784, dim_hidden=200, dim_out=10,
+                 use_dropout=False, activation='ReLU'):
         super(MLP, self).__init__()
-        self.layer_input = nn.Linear(dim_in, dim_hidden)
-        self.relu1 = nn.ReLU()
-        self.dropout1 = nn.Dropout()
-        self.layer_hidden1 = nn.Linear(dim_hidden, dim_hidden)
-        self.relu2 = nn.ReLU()
-        self.dropout2 = nn.Dropout()
-        self.layer_hidden2 = nn.Linear(dim_hidden, dim_out)
+        self.layers = nn.ModuleList([nn.Linear(dim_in, dim_hidden),
+                                     nn.Linear(dim_hidden, dim_hidden),
+                                     nn.Linear(dim_hidden, dim_out)])
         self.softmax = nn.Softmax(dim=1)
-        
-    def forward(self, x):
-        x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])
-        x = self.layer_input(x)
-        x = self.dropout1(x)
-        x = self.relu1(x)
-        x = self.layer_hidden1(x)
-        x = self.dropout2(x)
-        x = self.relu2(x)
-        x = self.layer_hidden2(x)
+
+        self.relu = getattr(nn, activation)()
+        self.dropout = None
+        if use_dropout:
+            self.dropout = nn.Dropout()
+
+    def forward(self, x):                                       # input x of size (batchsize, 1, H, W)
+        x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1])  # x of size (batchsize, H*W)
+
+        # Compute the forward propagation
+        for layer in self.layers:
+            x = layer(x)
+            if self.dropout != None:
+                x = self.dropout(x)
+            x = self.relu(x)
+
         return self.softmax(x)
 
 # class CNNMnist(nn.Module):
@@ -67,20 +54,25 @@ class CNNMnist(nn.Module):
     def __init__(self, args):
         super(CNNMnist, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(args.num_channels, 32, kernel_size=5),
+            nn.Conv2d(args.num_channels, args.num_hidden_channels1,kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(2))
+            nn.MaxPool2d(2,2))
+        
         self.layer2 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=5),
+            nn.Conv2d(args.num_hidden_channels1, args.num_hidden_channels2,kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(2))
-        self.fc = nn.Linear(1024, args.num_classes)
+            nn.MaxPool2d(2,2))
+        
+        self.fc1 = nn.Linear(args.num_hidden_channels2*7*7, 512)
+        self.fc2 = nn.Linear(512, args.num_classes)
+
 
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer2(x)
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.fc(x))
+        x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1])  # x of size (batchsize, H*W)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
         return F.softmax(x, dim=1)
 
 class CNNFashion_Mnist(nn.Module):
@@ -125,6 +117,7 @@ class CNNCifar(nn.Module):
         x = self.fc3(x)
         return F.log_softmax(x, dim=1)
 
+
 class modelC(nn.Module):
     def __init__(self, input_size, n_classes=10, **kwargs):
         super(AllConvNet, self).__init__()
@@ -158,3 +151,21 @@ class modelC(nn.Module):
         pool_out.squeeze_(-1)
         pool_out.squeeze_(-1)
         return pool_out
+
+
+# ==========================================================================================================
+# Main function
+# ==========================================================================================================
+if __name__ == "__main__":
+    import torch
+    from collections import namedtuple
+    args = {'num_classes': 10, 'num_channels': 1,
+            'num_hidden_channels1': 32, 'num_hidden_channels2': 64}
+    args = namedtuple('x', args.keys())(*args.values())
+    model = CNNMnist(args)
+
+    x = torch.rand((2, 1, 28, 28))
+    # model = MLP()
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print(pytorch_total_params)
+    # y = model(x)
