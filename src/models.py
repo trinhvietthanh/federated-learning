@@ -54,16 +54,16 @@ class CNNMnist(nn.Module):
     def __init__(self, args):
         super(CNNMnist, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(args.num_channels, args.num_hidden_channels1,kernel_size=5),
+            nn.Conv2d(args.num_channels, 32,kernel_size=5, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(2,2))
         
         self.layer2 = nn.Sequential(
-            nn.Conv2d(args.num_hidden_channels1, args.num_hidden_channels2,kernel_size=5),
+            nn.Conv2d(32, 64,kernel_size=5, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(2,2))
         
-        self.fc1 = nn.Linear(args.num_hidden_channels2*7*7, 512)
+        self.fc1 = nn.Linear(64*7*7, 512)
         self.fc2 = nn.Linear(512, args.num_classes)
 
 
