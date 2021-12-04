@@ -7,7 +7,7 @@ import torch
 from torchvision import datasets, transforms
 from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal
 from sampling import cifar_iid, cifar_noniid
-
+import numpy as np
 
 def get_dataset(args):
     """ Returns train and test datasets and a user group which is a dict where
@@ -83,6 +83,16 @@ def average_weights(w):
         w_avg[key] = torch.div(w_avg[key], len(w))
     return w_avg
 
+def fedProx(global_weight, w):
+    """
+    Returns the value of FedProx alogrithm
+    """
+    w_prox = copy.deepcopy(w[0])
+    for key in w_prox.keys():
+        for i in range(1, len(w)):
+            w_prox[key] = np.sum(np.square(global_weight[key] - w[i][key]))
+        w_prox[key] =  torch.div(w_prox[key], len(w))
+    return w_prox
 
 def exp_details(args):
     print('\nExperimental details:')

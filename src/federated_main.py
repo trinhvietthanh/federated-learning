@@ -17,8 +17,7 @@ from options import args_parser
 from update import LocalUpdate, test_inference
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
 from utils import get_dataset, average_weights, exp_details
-
-
+import matplotlib.pyplot as plt
 if __name__ == '__main__':
     start_time = time.time()
 
@@ -168,6 +167,6 @@ if __name__ == '__main__':
     plt.plot(range(len(test_accuracy)), test_accuracy, color='k')
     plt.ylabel('Test Accuracy')
     plt.xlabel('Communication Rounds')
-    plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
+    plt.savefig('./save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
                 format(args.dataset, args.model, args.epochs, args.frac,
                        args.iid, args.local_ep, args.local_bs))
